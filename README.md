@@ -1,6 +1,6 @@
-# Project Name
+# Machine and Deep Learning Playground
 
-> Project description one-liner
+>  A repository to play around with ML/DL models, pipelines, and MLOps
 
 ## About
 
