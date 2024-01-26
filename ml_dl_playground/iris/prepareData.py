@@ -4,8 +4,8 @@ from typing import List, Literal, Tuple
 import pandas
 from numpy import ndarray
 from pandas import DataFrame, Series
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, Normalizer
+from sklearnex.model_selection import train_test_split
 
 
 def _loadData(filepath: Path) -> DataFrame:
