@@ -1225,6 +1225,16 @@ typing = ["typing-extensions"]
 xmp = ["defusedxml"]
 
 [[package]]
+name = "progress"
+version = "1.6"
+description = "Easy to use progress bars"
+optional = false
+python-versions = "*"
+files = [
+    {file = "progress-1.6.tar.gz", hash = "sha256:c9c86e98b5c03fa1fe11e3b67c1feda4788b8d0fe7336c2ff7d5644ccfba34cd"},
+]
+
+[[package]]
 name = "protobuf"
 version = "4.25.2"
 description = ""
@@ -1860,4 +1870,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "53dd5318639d283f8134e71fc70e0be1ef59e0ae56b17fd46a837722f3588e25"
+content-hash = "2398d41870b1f377f41dcf943ce3759a0ce803622499556e0b95ca35b80aa03b"
