@@ -1,9 +1,11 @@
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, Generator, List, Tuple
 
 import pandas
 from numpy import ndarray
 from pandas import DataFrame, Series
+from progress.bar import Bar
+from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearnex.model_selection import train_test_split
 
@@ -28,7 +30,7 @@ def prepareClassificationData(
     """
     Output is in the form of:
 
-    (xTrain, xTest, yTrain, yTest)
+    Tuple[xTrain, xTest, yTrain, yTest]
     """
 
     xTrain: ndarray
@@ -54,3 +56,40 @@ def prepareClassificationData(
     )
 
     return (xTrain, xTest, yTrain, yTest)
+
+
+def stratifiedKFold(
+    x: ndarray,
+    y: ndarray,
+    splits: int = 10,
+    randomState=42,
+) -> List[Tuple[ndarray, ndarray, ndarray, ndarray]]:
+    """
+    Returns data in the format:
+
+    List[Tuple(xTrain, xValidation, yTrain, yValidation)]
+    """
+
+    data: List[Tuple[ndarray, ndarray, ndarray, ndarray]] = []
+
+    skf: StratifiedKFold = StratifiedKFold(
+        n_splits=splits,
+        shuffle=True,
+        random_state=randomState,
+    )
+    folds: Generator = skf.split(X=x, y=y)
+
+    fold: Tuple[ndarray, ndarray]
+    for fold in folds:
+        trainingIdx: ndarray = fold[0]
+        valIdx: ndarray = fold[1]
+
+        xTrain: ndarray = x[trainingIdx]
+        xVal: ndarray = x[valIdx]
+
+        yTrain: ndarray = y[trainingIdx]
+        yVal: ndarray = y[valIdx]
+
+        data.append((xTrain, xVal, yTrain, yVal))
+
+    return data
