@@ -8,13 +8,17 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearnex.model_selection import train_test_split
 
+from ml_dl_playground.utils import fs
+
 
 def loadDataFromCSV(dataFilepath: Path, columns: List[str] | None = None) -> DataFrame:
+    absDataFilepath: Path = fs.convertRelativePathToAbsolute(path=dataFilepath)
+
     if columns == None:
-        return pandas.read_csv(filepath_or_buffer=dataFilepath)
+        return pandas.read_csv(filepath_or_buffer=absDataFilepath)
     else:
         return pandas.read_csv(
-            filepath_or_buffer=dataFilepath,
+            filepath_or_buffer=absDataFilepath,
             header=None,
             names=columns,
         )
