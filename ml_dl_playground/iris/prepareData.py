@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import List, Literal, Tuple
+from typing import List, Tuple
 
 import pandas
 from numpy import ndarray
 from pandas import DataFrame, Series
-from sklearn.preprocessing import LabelEncoder, Normalizer
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearnex.model_selection import train_test_split
 
 
@@ -26,7 +26,6 @@ def _loadData(filepath: Path) -> DataFrame:
 
 def prepare(
     filepath: Path,
-    norm: Literal["l1", "l2", "max", "none"] = "none",
     testSize: float = 0.25,
     randomState: int = 42,
 ) -> Tuple[ndarray, ndarray, ndarray, ndarray]:
@@ -50,12 +49,7 @@ def prepare(
     ndValues: ndarray = values.to_numpy(dtype=float)
 
     encodedNDLabels: ndarray = LabelEncoder().fit_transform(y=ndLabels)
-
-    normalizedNDValues: ndarray
-    if norm == "none":
-        normalizedNDValues = ndValues
-    else:
-        normalizedNDValues: ndarray = Normalizer(norm=norm).fit_transform(X=ndValues)
+    normalizedNDValues: ndarray = StandardScaler().fit_transform(X=ndValues)
 
     xTrain, xTest, yTrain, yTest = train_test_split(
         normalizedNDValues,
