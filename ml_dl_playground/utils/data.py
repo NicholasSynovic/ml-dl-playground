@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import Any, Generator, List, Tuple
+from typing import Generator, List, Tuple
 
 import pandas
 from numpy import ndarray
 from pandas import DataFrame, Series
-from progress.bar import Bar
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearnex.model_selection import train_test_split
