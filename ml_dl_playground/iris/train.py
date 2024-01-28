@@ -23,7 +23,6 @@ DEFAULT_SVC_PARAMETERS: List[
 def _trainSVC(
     estimator: BaseSVC,
     trainingData: Tuple[ndarray, ndarray],
-    validationData: Tuple[ndarray, ndarray],
     **kwargs,
 ) -> BaseSVC:
     model: BaseSVC = estimator.set_params(**kwargs)
@@ -33,25 +32,21 @@ def _trainSVC(
 
 def trainSVC(
     trainingData: Tuple[ndarray, ndarray],
-    validationData: Tuple[ndarray, ndarray],
     **kwargs,
 ) -> SVC:
     return _trainSVC(
         estimator=SVC(),
         trainingData=trainingData,
-        validationData=validationData,
         **kwargs,
     )
 
 
 def trainIntelSVC(
     trainingData: Tuple[ndarray, ndarray],
-    validationData: Tuple[ndarray, ndarray],
     **kwargs,
 ) -> intelSVC:
     return _trainSVC(
         estimator=intelSVC(),
         trainingData=trainingData,
-        validationData=validationData,
         **kwargs,
     )
