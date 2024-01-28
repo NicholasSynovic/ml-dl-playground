@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import Tuple
+from warnings import filterwarnings
 
 from numpy import ndarray
 from prepareData import prepare
 from train import trainIntelSVC, trainSVC
-from warnings import filterwarnings
 
 filterwarnings(action="ignore")
 
