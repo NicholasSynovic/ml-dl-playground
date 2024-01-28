@@ -1,6 +1,6 @@
 # Machine and Deep Learning Playground
 
->  A repository to play around with ML/DL models, pipelines, and MLOps
+> A repository to play around with ML/DL models, pipelines, and MLOps
 
 ## About
 
