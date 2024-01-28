@@ -1,20 +1,73 @@
-from typing import Any, List, Tuple
+from itertools import product
+from typing import Any, Generator, List, Tuple
 
 from numpy import ndarray
-from pandas import DataFrame
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import GridSearchCV
+from progress.bar import Bar
+from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
 from sklearn.svm._base import BaseSVC
 from sklearnex.svm import SVC as intelSVC
 
 
+def _stratifiedKFold(
+    x: ndarray,
+    y: ndarray,
+    splits: int = 10,
+    randomState=42,
+) -> List[Tuple[ndarray, ndarray, ndarray, ndarray]]:
+    """
+    Returns data in the format:
+
+    (xTrain, xValidation, yTrain, yValidation)
+    """
+
+    data: List[Tuple[ndarray, ndarray, ndarray, ndarray]] = []
+
+    skf: StratifiedKFold = StratifiedKFold(
+        n_splits=splits,
+        shuffle=True,
+        random_state=randomState,
+    )
+    folds: Generator = skf.split(X=x, y=y)
+
+    fold: Tuple[ndarray, ndarray]
+    for fold in folds:
+        trainingIdx: ndarray = fold[0]
+        valIdx: ndarray = fold[1]
+
+        xTrain: ndarray = x[trainingIdx]
+        xVal: ndarray = x[valIdx]
+
+        yTrain: ndarray = y[trainingIdx]
+        yVal: ndarray = y[valIdx]
+
+        data.append((xTrain, xVal, yTrain, yVal))
+
+    return data
+
+
+def _gridSearch(options: dict[str, Any]) -> List[dict[str, Any]]:
+    dictList: List[dict[str, Any]] = []
+
+    keys = options.keys()
+    values = options.values()
+
+    parameterTuples: List[Tuple[Any]] = list(product(*values))
+
+    parameterPair: Tuple[Any]
+    for parameterPair in parameterTuples:
+        dictList.append(dict(zip(keys, parameterPair)))
+
+    return dictList
+
+
 def _trainSVC(
-    model: Any,
+    estimator: BaseSVC,
     data: Tuple[ndarray, ndarray, ndarray, ndarray],
     epochs: List[int] = [1, 10, 50, 100, 200, 500, 1000],
     randomState: int = 42,
-) -> GridSearchCV:
+    splits: int = 10,
+) -> None:
     xTrain: ndarray = data[0]
     yTrain: ndarray = data[2]
 
@@ -25,27 +78,38 @@ def _trainSVC(
         "random_state": [randomState],
     }
 
-    gs: GridSearchCV = GridSearchCV(
-        estimator=model,
-        param_grid=parameterGrid,
-        refit=True,
-        cv=10,
-        verbose=10,
-        return_train_score=True,
+    gs: List[dict[str, Any]] = _gridSearch(options=parameterGrid)
+    dataFolds: List[Tuple[ndarray, ndarray, ndarray, ndarray]] = _stratifiedKFold(
+        x=xTrain,
+        y=yTrain,
+        splits=splits,
+        randomState=randomState,
     )
 
-    gs.fit(X=xTrain, y=yTrain)
+    with Bar(f"Training {type(estimator)} models on data...", max=len(gs)) as bar:
+        parameters: dict[str, Any]
+        for parameters in gs:
+            model: BaseSVC = estimator.set_params(**parameters)
 
-    return gs
+            fold: Tuple[ndarray, ndarray, ndarray, ndarray]
+            for fold in dataFolds:
+                xTrainFold: ndarray = fold[0]
+                xValFold: ndarray = fold[1]
+                yTrainFold: ndarray = fold[2]
+                yValFold: ndarray = fold[3]
+
+                model.fit(X=xTrainFold, y=yTrainFold)
+
+            bar.next()
 
 
 def trainSVC(
     data: Tuple[ndarray, ndarray, ndarray, ndarray],
     epochs: List[int] = [1, 10, 50, 100, 200, 500, 1000],
     randomState: int = 42,
-) -> GridSearchCV:
-    return _trainSVC(
-        model=SVC(),
+) -> None:
+    _trainSVC(
+        estimator=SVC(),
         data=data,
         epochs=epochs,
         randomState=randomState,
@@ -56,24 +120,10 @@ def trainIntelSVC(
     data: Tuple[ndarray, ndarray, ndarray, ndarray],
     epochs: List[int] = [1, 10, 50, 100, 200, 500, 1000],
     randomState: int = 42,
-) -> GridSearchCV:
-    return _trainSVC(
-        model=intelSVC(),
+) -> None:
+    _trainSVC(
+        estimator=intelSVC(),
         data=data,
         epochs=epochs,
         randomState=randomState,
     )
-
-
-def score(
-    gs: GridSearchCV,
-    data: Tuple[ndarray, ndarray, ndarray, ndarray],
-) -> DataFrame:
-    xTest: ndarray = data[1]
-    yTest: ndarray = data[3]
-
-    model: BaseSVC = gs.best_estimator_
-
-    yPredictions: ndarray = model.predict(X=xTest)
-
-    print(accuracy_score(y_true=yTest, y_pred=yPredictions))
