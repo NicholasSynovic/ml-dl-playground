@@ -1,64 +1,10 @@
-from itertools import product
-from typing import Any, Generator, List, Tuple
+from typing import Any, List, Tuple
 
 from numpy import ndarray
 from progress.bar import Bar
-from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
 from sklearn.svm._base import BaseSVC
 from sklearnex.svm import SVC as intelSVC
-
-
-def _stratifiedKFold(
-    x: ndarray,
-    y: ndarray,
-    splits: int = 10,
-    randomState=42,
-) -> List[Tuple[ndarray, ndarray, ndarray, ndarray]]:
-    """
-    Returns data in the format:
-
-    (xTrain, xValidation, yTrain, yValidation)
-    """
-
-    data: List[Tuple[ndarray, ndarray, ndarray, ndarray]] = []
-
-    skf: StratifiedKFold = StratifiedKFold(
-        n_splits=splits,
-        shuffle=True,
-        random_state=randomState,
-    )
-    folds: Generator = skf.split(X=x, y=y)
-
-    fold: Tuple[ndarray, ndarray]
-    for fold in folds:
-        trainingIdx: ndarray = fold[0]
-        valIdx: ndarray = fold[1]
-
-        xTrain: ndarray = x[trainingIdx]
-        xVal: ndarray = x[valIdx]
-
-        yTrain: ndarray = y[trainingIdx]
-        yVal: ndarray = y[valIdx]
-
-        data.append((xTrain, xVal, yTrain, yVal))
-
-    return data
-
-
-def _gridSearch(options: dict[str, Any]) -> List[dict[str, Any]]:
-    dictList: List[dict[str, Any]] = []
-
-    keys = options.keys()
-    values = options.values()
-
-    parameterTuples: List[Tuple[Any]] = list(product(*values))
-
-    parameterPair: Tuple[Any]
-    for parameterPair in parameterTuples:
-        dictList.append(dict(zip(keys, parameterPair)))
-
-    return dictList
 
 
 def _trainSVC(
