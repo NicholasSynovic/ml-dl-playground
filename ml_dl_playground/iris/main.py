@@ -6,6 +6,7 @@ from warnings import filterwarnings
 
 from numpy import ndarray
 from progress.bar import Bar
+from sklearn import metrics as skMetrics
 from sklearn.base import BaseEstimator
 from sklearn.svm import SVC
 from sklearnex.svm import SVC as intelSVC
@@ -38,14 +39,52 @@ def _trainingLoop(
                 xTrain: ndarray = datum[0]
                 yTrain: ndarray = datum[2]
 
+                xVal: ndarray = datum[1]
+                yVal: ndarray = datum[3]
+
                 trainingStartTime: float = time()
                 model.fit(X=xTrain, y=yTrain)
                 trainingEndTime: float = time() - trainingStartTime
 
+                predictions: ndarray = model.predict(X=xVal)
+                predictionFunction: ndarray = model.decision_function(X=xVal)
+
+                balancedAccuracyScore: float = skMetrics.balanced_accuracy_score(
+                    y_true=yVal,
+                    y_pred=predictions,
+                )
+                cohenKappaScore: float = skMetrics.cohen_kappa_score(
+                    y1=yVal,
+                    y2=predictions,
+                )
+                linearCohenKappaScore: float = skMetrics.cohen_kappa_score(
+                    y1=yVal,
+                    y2=predictions,
+                    weights="linear",
+                )
+                quadraticCohenKappaScore: float = skMetrics.cohen_kappa_score(
+                    y1=yVal,
+                    y2=predictions,
+                    weights="quadratic",
+                )
+                matthewsCorrCoef: float = skMetrics.matthews_corrcoef(
+                    y_true=yVal,
+                    y_pred=predictions,
+                )
+
+                metricsStor: dict[str, Any] = {
+                    "training_time": trainingEndTime,
+                    "balanced_accuracy_score": balancedAccuracyScore,
+                    "cohen_kappa_score": cohenKappaScore,
+                    "linear_cohen_kappa_score": linearCohenKappaScore,
+                    "quadratic_cohen_kappa_score": quadraticCohenKappaScore,
+                    "matthews_corr_coef": matthewsCorrCoef,
+                }
+
                 mlf.storeModelInformation(
                     hyperparameters=parameters,
-                    trainingTime=trainingEndTime,
                     tags=modelTags,
+                    metrics=metricsStor,
                 )
 
             bar.next()
