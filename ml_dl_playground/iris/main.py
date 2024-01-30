@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Any, List, Tuple
 from warnings import filterwarnings
@@ -10,8 +11,10 @@ from sklearnex.svm import SVC as intelSVC
 
 from ml_dl_playground.iris import train
 from ml_dl_playground.iris.prepareData import load
+from ml_dl_playground.metrics.mlflow import MLFlow
 from ml_dl_playground.utils import fs
 
+logging.disable(level=logging.CRITICAL)
 filterwarnings(action="ignore")
 
 
@@ -19,6 +22,7 @@ def _trainingLoop(
     estimator: BaseEstimator,
     gridSearch: List[dict],
     trainValidationSplits: List[Tuple[ndarray, ndarray, ndarray, ndarray]],
+    mlf: MLFlow,
 ) -> None:
     with Bar(f"Training {type(estimator)} models...", max=len(gridSearch)) as bar:
         parameters: dict[str, Any]
@@ -32,10 +36,14 @@ def _trainingLoop(
 
                 model.fit(X=xTrain, y=yTrain)
 
+                mlf.storeModelInformation(hyperparameters=parameters)
+
             bar.next()
 
 
 def main() -> None:
+    mlf: MLFlow = MLFlow(experimentName="Iris_SVM")
+
     dataFilepath: Path = Path("../../data/iris/bezdekIris.data")
     absoluteDataFilepath: Path = fs.convertRelativePathToAbsolute(path=dataFilepath)
 
@@ -53,12 +61,14 @@ def main() -> None:
         estimator=SVC(),
         gridSearch=gridSearch,
         trainValidationSplits=trainValidationSplits,
+        mlf=mlf,
     )
 
     _trainingLoop(
         estimator=intelSVC(),
         gridSearch=gridSearch,
         trainValidationSplits=trainValidationSplits,
+        mlf=mlf,
     )
 
 

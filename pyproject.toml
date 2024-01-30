@@ -15,6 +15,8 @@ click = "^8.1.7"
 progress = "^1.6"
 pandas = "^2.2.0"
 numpy = "^1.26.3"
+psutil = "^5.9.8"
+pynvml = "^11.5.0"
 
 
 [build-system]
