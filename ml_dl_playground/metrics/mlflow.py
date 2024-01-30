@@ -42,6 +42,16 @@ class MLFlow:
 
         self.experimentID: str = self.experiment.experiment_id
 
-    def storeModelInformation(self, hyperparameters: dict[str, Any]) -> None:
+    def storeModelInformation(
+        self,
+        hyperparameters: dict[str, Any],
+        trainingTime: float,
+        tags: dict[str, Any],
+    ) -> None:
         with mlflow.start_run(log_system_metrics=True) as mlfRun:
+            mlflow.set_tags(tags=tags)
             mlflow.log_params(params=hyperparameters)
+            mlflow.log_metric(
+                key="training_time",
+                value=trainingTime,
+            )

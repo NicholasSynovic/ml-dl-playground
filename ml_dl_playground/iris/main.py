@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from time import time
 from typing import Any, List, Tuple
 from warnings import filterwarnings
 
@@ -31,12 +32,21 @@ def _trainingLoop(
 
             datum: Tuple[ndarray, ndarray, ndarray, ndarray]
             for datum in trainValidationSplits:
+                modelTags: dict[str, Any] = {
+                    "model_type": str(type(model)),
+                }
                 xTrain: ndarray = datum[0]
                 yTrain: ndarray = datum[2]
 
+                trainingStartTime: float = time()
                 model.fit(X=xTrain, y=yTrain)
+                trainingEndTime: float = time() - trainingStartTime
 
-                mlf.storeModelInformation(hyperparameters=parameters)
+                mlf.storeModelInformation(
+                    hyperparameters=parameters,
+                    trainingTime=trainingEndTime,
+                    tags=modelTags,
+                )
 
             bar.next()
 
