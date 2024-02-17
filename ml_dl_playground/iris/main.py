@@ -47,7 +47,6 @@ def _trainingLoop(
                 trainingEndTime: float = time() - trainingStartTime
 
                 predictions: ndarray = model.predict(X=xVal)
-                predictionFunction: ndarray = model.decision_function(X=xVal)
 
                 balancedAccuracyScore: float = skMetrics.balanced_accuracy_score(
                     y_true=yVal,
