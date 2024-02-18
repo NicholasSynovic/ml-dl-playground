@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Generator, List, Tuple
 
 import pandas
+from mlflow.data.numpy_dataset import NumpyDataset, from_numpy
 from numpy import ndarray
 from pandas import DataFrame, Series
 from sklearn.model_selection import StratifiedKFold
@@ -26,14 +27,15 @@ def loadDataFromCSV(dataFilepath: Path, columns: List[str] | None = None) -> Dat
 
 def prepareClassificationData(
     df: DataFrame,
+    datasetName: str,
     classColumnName: str = "class",
     testDataSizeRatio: float = 0.25,
     randomState=42,
-) -> Tuple[ndarray, ndarray, ndarray, ndarray]:
+) -> Tuple[NumpyDataset, NumpyDataset]:
     """
     Output is in the form of:
 
-    Tuple[xTrain, xTest, yTrain, yTest]
+    Tuple[trainingDataset, testingDataset]
     """
 
     xTrain: ndarray
@@ -58,22 +60,37 @@ def prepareClassificationData(
         shuffle=True,
     )
 
-    return (xTrain, xTest, yTrain, yTest)
+    trainingDataset: NumpyDataset = from_numpy(
+        features=xTrain,
+        targets=yTrain,
+        name=f"{datasetName}_training",
+    )
+    testingDataset: NumpyDataset = from_numpy(
+        features=xTest,
+        targets=yTest,
+        name=f"{datasetName}_testing",
+    )
+
+    return (trainingDataset, testingDataset)
 
 
 def stratifiedKFold(
-    x: ndarray,
-    y: ndarray,
+    trainingData: NumpyDataset,
     splits: int = 10,
     randomState=42,
-) -> List[Tuple[ndarray, ndarray, ndarray, ndarray]]:
+) -> List[Tuple[NumpyDataset, NumpyDataset]]:
     """
     Returns data in the format:
 
-    List[Tuple(xTrain, xValidation, yTrain, yValidation)]
+    List[Tuple[trainingDataset, validationDataset]]
     """
 
-    data: List[Tuple[ndarray, ndarray, ndarray, ndarray]] = []
+    data: List[Tuple[NumpyDataset, NumpyDataset]] = []
+
+    counter: int = 0
+    x: ndarray = trainingData.features
+    y: ndarray = trainingData.targets
+    datasetName: str = trainingData.name
 
     skf: StratifiedKFold = StratifiedKFold(
         n_splits=splits,
@@ -88,11 +105,24 @@ def stratifiedKFold(
         valIdx: ndarray = fold[1]
 
         xTrain: ndarray = x[trainingIdx]
-        xVal: ndarray = x[valIdx]
-
         yTrain: ndarray = y[trainingIdx]
+
+        xVal: ndarray = x[valIdx]
         yVal: ndarray = y[valIdx]
 
-        data.append((xTrain, xVal, yTrain, yVal))
+        trainingDataset: NumpyDataset = from_numpy(
+            features=xTrain,
+            targets=yTrain,
+            name=f"{datasetName}_split_{counter}",
+        )
+        validationDataset: NumpyDataset = from_numpy(
+            features=xVal,
+            targets=yVal,
+            name=f"{datasetName}_validation_split_{counter}",
+        )
+
+        data.append((trainingDataset, validationDataset))
+
+        counter += 1
 
     return data

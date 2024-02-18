@@ -1,17 +1,25 @@
+import logging
 from time import time
 from typing import Any, List, Tuple
+from warnings import filterwarnings
 
 import pandas
+from mlflow.data.numpy_dataset import NumpyDataset
 from numpy import ndarray
 from pandas import DataFrame
 from progress.bar import Bar
 from sklearn import metrics as skMetrics
 from sklearn.base import BaseEstimator
+from sklearn.svm import SVC
 from ucimlrepo import dotdict, fetch_ucirepo
 
 from ml_dl_playground.metrics.mlflow import MLFlow
 from ml_dl_playground.utils import hyperparameterTuning
 from ml_dl_playground.utils.data import prepareClassificationData, stratifiedKFold
+
+logging.disable(level=logging.CRITICAL)
+filterwarnings(action="ignore")
+
 
 DEFAULT_SVC_PARAMETERS: List[dict[str, Any]] = hyperparameterTuning.gridSearch(
     options={
@@ -62,9 +70,14 @@ def computeMetrics(
 def trainingLoop(
     estimator: BaseEstimator,
     gridSearch: List[dict[str, Any]],
-    trainValidationSplits: List[Tuple[ndarray, ndarray, ndarray, ndarray]],
+    trainValidationSplits: List[Tuple[NumpyDataset, NumpyDataset]],
+    testingDataset: NumpyDataset,
     mlf: MLFlow,
 ) -> None:
+    """
+    testingData is to be in the format (xTest, yTest)
+    """
+
     with Bar(
         f"Training {type(estimator)} models...",
         max=len(gridSearch) * len(trainValidationSplits),
@@ -73,17 +86,20 @@ def trainingLoop(
         for hyperparameters in gridSearch:
             model: BaseEstimator = estimator.set_params(**hyperparameters)
 
-            datum: Tuple[ndarray, ndarray, ndarray, ndarray]
+            datum: Tuple[NumpyDataset, NumpyDataset]
             for datum in trainValidationSplits:
                 modelTags: dict[str, Any] = {
                     "model_type": str(type(model)),
                 }
 
-                xTrain: ndarray = datum[0]
-                yTrain: ndarray = datum[2]
+                trainingDataset: NumpyDataset = datum[0]
+                validationDataset: NumpyDataset = datum[1]
 
-                xVal: ndarray = datum[1]
-                yVal: ndarray = datum[3]
+                xTrain: ndarray = trainingDataset.features
+                yTrain: ndarray = trainingDataset.targets
+
+                xVal: ndarray = testingDataset.features
+                yVal: ndarray = testingDataset.targets
 
                 trainingStartTime: float = time()
                 model.fit(X=xTrain, y=yTrain)
@@ -103,7 +119,12 @@ def trainingLoop(
                     hyperparameters=hyperparameters,
                     tags=modelTags,
                     metrics=modelMetrics,
+                    trainingData=trainingDataset,
+                    validationData=validationDataset,
+                    testingData=testingDataset,
                 )
+
+                bar.next()
 
 
 def loadData() -> DataFrame:
@@ -114,16 +135,34 @@ def loadData() -> DataFrame:
 
 
 def main() -> None:
-    xTrain: ndarray
-    yTrain: ndarray
-    xTest: ndarray
-    yTest: ndarray
+    mlf: MLFlow = MLFlow(experimentName="Iris dataset classifiers")
+
+    print(f"Connected to experiment {mlf.experimentID}")
 
     df: DataFrame = loadData()
 
-    xTrain, xTest, yTrain, yTest = prepareClassificationData(df=df)
-    trainingData: List[Tuple[ndarray, ndarray, ndarray, ndarray]] = stratifiedKFold(
-        x=xTrain, y=yTrain
+    print("Loaded data from UCI")
+
+    trainingDataset: NumpyDataset
+    testingDataset: NumpyDataset
+    trainingDataset, testingDataset = prepareClassificationData(
+        df=df, datasetName="Iris"
+    )
+
+    print("Created training and testing datasets")
+
+    trainingDatasetSplits: List[Tuple[NumpyDataset, NumpyDataset]] = stratifiedKFold(
+        trainingData=trainingDataset,
+    )
+
+    print("Created training and validation dataset splits")
+
+    trainingLoop(
+        estimator=SVC(),
+        gridSearch=DEFAULT_SVC_PARAMETERS,
+        trainValidationSplits=trainingDatasetSplits,
+        testingDataset=testingDataset,
+        mlf=mlf,
     )
 
 

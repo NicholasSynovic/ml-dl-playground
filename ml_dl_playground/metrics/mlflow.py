@@ -1,6 +1,7 @@
 from typing import Any
 
 import mlflow
+from mlflow.data.dataset import Dataset
 from mlflow.entities import Experiment
 from mlflow.exceptions import RestException
 
@@ -47,8 +48,14 @@ class MLFlow:
         hyperparameters: dict[str, Any],
         tags: dict[str, Any],
         metrics: dict[str, Any],
+        trainingData: Dataset,
+        validationData: Dataset,
+        testingData: Dataset,
     ) -> None:
-        with mlflow.start_run(log_system_metrics=True) as mlfRun:
+        with mlflow.start_run(log_system_metrics=False) as mlfRun:
             mlflow.set_tags(tags=tags)
             mlflow.log_params(params=hyperparameters)
             mlflow.log_metrics(metrics=metrics)
+            mlflow.log_input(dataset=trainingData, context="training")
+            mlflow.log_input(dataset=validationData, context="validation")
+            mlflow.log_input(dataset=testingData, context="testing")
