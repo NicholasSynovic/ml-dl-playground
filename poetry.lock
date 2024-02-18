@@ -1844,6 +1844,17 @@ files = [
 ]
 
 [[package]]
+name = "ucimlrepo"
+version = "0.0.3"
+description = "Package to easily import datasets from the UC Irvine Machine Learning Repository into scripts and notebooks."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "ucimlrepo-0.0.3-py3-none-any.whl", hash = "sha256:935860c7a796b2e3419407bb2026b446898815e806da87f95614019e42d3d153"},
+    {file = "ucimlrepo-0.0.3.tar.gz", hash = "sha256:0ed682c4f6727f410a1dcfdb48bf58015945ad3a059bd00aa55b5f24680c63d2"},
+]
+
+[[package]]
 name = "urllib3"
 version = "2.1.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -1909,4 +1920,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "46c28334eab5dcfbb6ba45eba4dd80ac4e77036de9a9958eac23a8e7b0479d2b"
+content-hash = "64bef97ba7545bba749087cd8a35fefa5b6cfc4c3aac078ff38ce60a59f8e715"
